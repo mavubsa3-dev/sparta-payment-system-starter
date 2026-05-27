@@ -1,15 +1,15 @@
 package com.sparta.paymentsystem.domain.product.service;
 
-import com.sparta.paymentsystem.domain.product.entity.Product;
 import com.sparta.paymentsystem.domain.product.dto.ProductResponse;
+import com.sparta.paymentsystem.domain.product.entity.Product;
 import com.sparta.paymentsystem.domain.product.repository.ProductRepository;
+import com.sparta.paymentsystem.global.error.BusinessException;
+import com.sparta.paymentsystem.global.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-
-import static java.util.stream.Collectors.toList;
 
 @Service
 @RequiredArgsConstructor
@@ -18,30 +18,23 @@ public class ProductService {
 
     private final ProductRepository productRepository;
 
-    public List<ProductResponse> findAll(){
+    public List<ProductResponse> findAll() {
         return productRepository.findAll().stream()
-                .map(product -> new ProductResponse(
-                        product.getId(),
-                        product.getName(),
-                        product.getPrice(),
-                        product.getStock(),
-                        product.getDescription()
-                )
-                ).toList();
+                .map(this::toResponse)
+                .toList();
     }
 
-    public ProductResponse findById(Long id){
+    public ProductResponse findById(Long id) {
         Product product = findProductEntity(id);
         return toResponse(product);
     }
 
-    public Product findProductEntity(Long id){
-        return productRepository.findById(id).orElseThrow(
-                () -> new RuntimeException("상품을 찾을 수 없습니다.")
-        );
+    public Product findProductEntity(Long id) {
+        return productRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PRODUCT_NOT_FOUND));
     }
 
-    private ProductResponse toResponse(Product product){
+    private ProductResponse toResponse(Product product) {
         return new ProductResponse(
                 product.getId(),
                 product.getName(),
