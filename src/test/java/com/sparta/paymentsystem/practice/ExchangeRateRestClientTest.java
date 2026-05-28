@@ -1,10 +1,15 @@
 package com.sparta.paymentsystem.practice;
 
+import com.sparta.paymentsystem.domain.payment.entity.PaymentStatus;
+import com.sparta.paymentsystem.global.error.BusinessException;
+import com.sparta.paymentsystem.global.error.ErrorCode;
 import com.sparta.paymentsystem.practice.dto.ExchangeRateResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.client.RestClient;
+
+import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -48,5 +53,22 @@ class ExchangeRateRestClientTest {
 
         System.out.println("EUR → USD: " + response.rates().get("USD"));
         System.out.println("EUR → KRW: " + response.rates().get("KRW"));
+    }
+
+    public void markAsPaid() {
+        changeStatus(PaymentStatus.PAID);
+        this.paidAt = LocalDateTime.now();
+    }
+
+    public void markAsFailed() {
+        changeStatus(PaymentStatus.FAILED);
+    }
+
+    // 결제 상태 변경 로직
+    private void changeStatus(PaymentStatus newStatus) {
+        if (!this.status.canTransitTo(newStatus)) {
+            throw new BusinessException(ErrorCode.INVALID_PAYMENT_STATUS);
+        }
+        this.status = newStatus;
     }
 }
