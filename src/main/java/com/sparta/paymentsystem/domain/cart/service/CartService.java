@@ -6,12 +6,14 @@ import com.sparta.paymentsystem.domain.cart.repository.CartItemRepository;
 import com.sparta.paymentsystem.global.error.BusinessException;
 import com.sparta.paymentsystem.global.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -55,12 +57,20 @@ public class CartService {
         }
     }
 
-    public List<CartItem> findCartEntities(Long memberId){
+    public List<CartItem> findCartEntities(Long memberId) {
         return cartItemRepository.findByMemberId(memberId);
     }
 
-    public List<CartItem> findCartItemEntitiesByIds(Long memberId, List<Long> cartItemIds){
-        return cartItemRepository.findByIdInAndNumber_IdWithProduct(cartItemIds, memberId);
+    public List<CartItem> findCartEntitiesByIds(Long memberId, List<Long> cartItemIds) {
+        return cartItemRepository.findByIdInAndMember_IdWithProduct(cartItemIds, memberId);
+    }
+
+    public void clearCartItems(List<Long> orderedItemIds, Long memberId) {
+        int deleted = cartItemRepository.deleteAllByIdInAndMemberId(orderedItemIds, memberId);
+        if (deleted != orderedItemIds.size()) {
+            log.warn("장바구니 삭제 불일치: expected={}, actual={}, memberId={}",
+                    orderedItemIds.size(), deleted, memberId);
+        }
     }
 
     private CartItemResponse toResponse(CartItem item) {
@@ -73,4 +83,5 @@ public class CartService {
                 item.getProduct().getStock()
         );
     }
+
 }
